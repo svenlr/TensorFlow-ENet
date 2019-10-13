@@ -1,5 +1,6 @@
 import tensorflow as tf
 import os
+import cv2
 import matplotlib.pyplot as plt
 from enet import ENet, ENet_arg_scope
 from preprocessing import preprocess
@@ -134,5 +135,6 @@ with tf.Graph().as_default() as graph:
                 except:
                     # pass error for cmd line usage without display
                     pass
-                imsave(os.path.join(photo_dir, "image_%s.png" %(i*10 + j)), converted_image)
+                input_img = cv2.imread(images_list[i])
+                imsave(os.path.join(photo_dir, "image_%s.png" %(i*10 + j)), np.hstack([input_img, converted_image]))
                 # plt.show()
