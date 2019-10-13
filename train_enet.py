@@ -3,6 +3,7 @@ from tensorflow.contrib.framework.python.ops.variables import get_or_create_glob
 from tensorflow.python.platform import tf_logging as logging
 from enet import ENet, ENet_arg_scope
 from preprocessing import preprocess
+from utils import restore_matching_weights
 from get_class_weights import ENet_weighing, median_frequency_balancing
 import os
 import time
@@ -18,6 +19,7 @@ flags.DEFINE_string('dataset_dir', './dataset', 'The dataset directory to find t
 flags.DEFINE_string('logdir', './log/original', 'The log directory to save your checkpoint and event files.')
 flags.DEFINE_boolean('save_images', True, 'Whether or not to save your images.')
 flags.DEFINE_boolean('combine_dataset', False, 'If True, combines the validation with the train dataset.')
+flags.DEFINE_string('restore_from', None, 'Restore weights from the given checkpoint')
 
 #Training arguments
 flags.DEFINE_integer('num_classes', 12, 'The number of classes to predict.')
@@ -46,6 +48,7 @@ image_height = FLAGS.image_height
 image_width = FLAGS.image_width
 eval_batch_size = FLAGS.eval_batch_size #Can be larger than train_batch as no need to backpropagate gradients.
 combine_dataset = FLAGS.combine_dataset
+restore_from = FLAGS.restore_from
 
 #Training parameters
 initial_learning_rate = FLAGS.initial_learning_rate
@@ -281,6 +284,9 @@ def run():
 
         # Run the managed session
         with sv.managed_session() as sess:
+            # restore weights if restore path is given
+            if restore_from is not None:
+                restore_matching_weights(sess, restore_from)
             for step in xrange(int(num_steps_per_epoch * num_epochs)):
                 #At the start of every epoch, show the vital information:
                 if step % num_batches_per_epoch == 0:
@@ -289,7 +295,7 @@ def run():
                     logging.info('Current Learning Rate: %s', learning_rate_value)
 
                 #Log the summaries every 10 steps or every end of epoch, which ever lower.
-                if step % min(num_steps_per_epoch, 10) == 0:
+                if step % min(num_steps_per_epoch, 10) == 0 and step > 0:
                     loss, training_accuracy, training_mean_IOU = train_step(sess, train_op, sv.global_step, metrics_op=metrics_op)
 
                     #Check the validation data only at every third of an epoch
