@@ -28,12 +28,12 @@ def match_loaded_and_memory_tensors(loaded_tensors):
             tensor_aux = tf.get_default_graph().get_tensor_by_name(tensor_name + ":0")
             if not np.array_equal(tensor_aux.shape, tensor_loaded.shape) \
                     and not np.array_equal(tensor_aux.shape, tensor_loaded.shape[::-1]):
-                print('Weight mismatch for tensor {}: RAM model: {}, Loaded model: {}'.format(tensor_name, tensor_aux.shape,
+                print('Weight mismatch for tensor {}: Current model: {}, Checkpoint: {}'.format(tensor_name, tensor_aux.shape,
                                                                                               tensor_loaded.shape))
             else:
                 full_var_list.append(tensor_aux)
         except:
-            print('Loaded a tensor from weights file which has not been found in model: ' + tensor_name)
+            print('Loaded a tensor from checkpoint which has not been found in model: ' + tensor_name)
     return full_var_list
 
 
@@ -42,3 +42,14 @@ def restore_matching_weights(sess, data_path):
     loadable_tensors = match_loaded_and_memory_tensors(vars_in_checkpoint)
     loader = tf.train.Saver(var_list=loadable_tensors)
     loader.restore(sess, data_path)
+
+
+def gen_feed_dict_from_checkpoint(data_path):
+    vars_in_checkpoint = get_tensors_in_checkpoint_file(file_name=data_path)
+    checkpoint_dict = dict(list(zip(vars_in_checkpoint[0], vars_in_checkpoint[1])))
+    feed_dict = {}
+    loadable_tensors = match_loaded_and_memory_tensors(vars_in_checkpoint)
+    for tensor in loadable_tensors:
+        tensor_name = tensor.name.replace(":0", "")
+        feed_dict[tensor] = checkpoint_dict[tensor_name]
+    return feed_dict

@@ -3,7 +3,7 @@ from tensorflow.contrib.framework.python.ops.variables import get_or_create_glob
 from tensorflow.python.platform import tf_logging as logging
 from enet import ENet, ENet_arg_scope
 from preprocessing import preprocess
-from utils import restore_matching_weights
+from utils import gen_feed_dict_from_checkpoint
 from get_class_weights import ENet_weighing, median_frequency_balancing
 import os
 import time
@@ -281,12 +281,12 @@ def run():
 
         # restore weights if path is given
         if restore_from is not None:
-            restore_fn = lambda session: restore_matching_weights(session, restore_from)
+            init_feed_dict = gen_feed_dict_from_checkpoint(restore_from)
         else:
-            restore_fn = None
+            init_feed_dict = None
 
         #Define your supervisor for running a managed session. Do not run the summary_op automatically or else it will consume too much memory
-        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, init_fn=restore_fn)
+        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, init_fn=None, init_feed_dict=init_feed_dict)
 
         # Run the managed session
         with sv.managed_session() as sess:
