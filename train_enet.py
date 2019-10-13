@@ -279,14 +279,17 @@ def run():
         tf.summary.image('Images/Validation_segmentation_ground_truth', segmentation_ground_truth_val, max_outputs=1)
         my_summary_op = tf.summary.merge_all()
 
+        # restore weights if path is given
+        if restore_from is not None:
+            restore_fn = lambda session: restore_matching_weights(session, restore_from)
+        else:
+            restore_fn = None
+
         #Define your supervisor for running a managed session. Do not run the summary_op automatically or else it will consume too much memory
-        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, init_fn=None)
+        sv = tf.train.Supervisor(logdir=logdir, summary_op=None, init_fn=restore_fn)
 
         # Run the managed session
         with sv.managed_session() as sess:
-            # restore weights if restore path is given
-            if restore_from is not None:
-                restore_matching_weights(sess, restore_from)
             for step in xrange(int(num_steps_per_epoch * num_epochs)):
                 #At the start of every epoch, show the vital information:
                 if step % num_batches_per_epoch == 0:
