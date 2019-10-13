@@ -6,12 +6,24 @@ from preprocessing import preprocess
 from scipy.misc import imsave
 import numpy as np
 slim = tf.contrib.slim
+import argparse
 
-image_dir = './dataset/test/'
-images_list = sorted([os.path.join(image_dir, file) for file in os.listdir(image_dir) if file.endswith('.png')])
+parser = argparse.ArgumentParser(description="Run ENet inference")
 
-checkpoint_dir = "./checkpoint_mfb"
-checkpoint = tf.train.latest_checkpoint(checkpoint_dir)
+parser.add_argument("--weights", type=str, help="Model to use.")
+parser.add_argument("--num-classes", type=int, required=True)
+parser.add_argument("--input-dir", type=str, required=True)
+parser.add_argument("--output-dir", type=str, required=False, default=None)
+
+args = parser.parse_args()
+
+num_classes = args.num_classes
+image_dir = args.input_dir
+images_list = sorted(
+    [os.path.join(image_dir, file) for file in os.listdir(image_dir) if file.endswith('.png') or file.endswith(".jpg" or file.endswith(".jpeg"))])
+
+checkpoint_dir = os.path.basename(args.weights)
+checkpoint = args.weights
 
 num_initial_blocks = 1
 skip_connections = False
@@ -51,8 +63,10 @@ label_to_colours =    {0: [128,128,128],
                      10: [0,128,192],
                      11: [0,0,0]}
 
+label_to_colours[num_classes - 1] = [0, 0, 0]
+
 #Create the photo directory
-photo_dir = checkpoint_dir + "/test_images"
+photo_dir = args.output_dir if args.output_dir is not None else os.path.join(checkpoint_dir, "test_images")
 if not os.path.exists(photo_dir):
     os.mkdir(photo_dir)
 
@@ -82,7 +96,7 @@ with tf.Graph().as_default() as graph:
     #Create the model inference
     with slim.arg_scope(ENet_arg_scope()):
         logits, probabilities = ENet(images,
-                                     num_classes=12,
+                                     num_classes=num_classes,
                                      batch_size=10,
                                      is_training=True,
                                      reuse=None,
@@ -116,5 +130,5 @@ with tf.Graph().as_default() as graph:
                 print 'Saving image %s/%s' %(i*10 + j, len(images_list))
                 plt.axis('off')
                 plt.imshow(converted_image)
-                imsave(photo_dir + "/image_%s.png" %(i*10 + j), converted_image)
+                imsave(os.path.join(photo_dir, "image_%s.png" %(i*10 + j)), converted_image)
                 # plt.show()
