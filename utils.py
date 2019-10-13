@@ -42,14 +42,3 @@ def restore_matching_weights(sess, data_path):
     loadable_tensors = match_loaded_and_memory_tensors(vars_in_checkpoint)
     loader = tf.train.Saver(var_list=loadable_tensors)
     loader.restore(sess, data_path)
-
-
-def gen_feed_dict_from_checkpoint(data_path):
-    vars_in_checkpoint = get_tensors_in_checkpoint_file(file_name=data_path)
-    checkpoint_dict = dict(list(zip(vars_in_checkpoint[0], vars_in_checkpoint[1])))
-    feed_dict = {}
-    loadable_tensors = match_loaded_and_memory_tensors(vars_in_checkpoint)
-    for tensor in loadable_tensors:
-        tensor_name = tensor.name.replace(":0", "")
-        feed_dict[tensor] = checkpoint_dict[tensor_name]
-    return feed_dict
