@@ -20,7 +20,7 @@ args = parser.parse_args()
 num_classes = args.num_classes
 image_dir = args.input_dir
 images_list = sorted(
-    [os.path.join(image_dir, file) for file in os.listdir(image_dir) if file.endswith('.png') or file.endswith(".jpg" or file.endswith(".jpeg"))])
+    [os.path.join(image_dir, file) for file in os.listdir(image_dir) if file.endswith('.png') or file.endswith(".jpg") or file.endswith(".jpeg")])
 
 checkpoint_dir = os.path.basename(args.weights)
 checkpoint = args.weights
