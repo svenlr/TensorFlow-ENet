@@ -135,7 +135,7 @@ with tf.Graph().as_default() as graph:
                 except:
                     # pass error for cmd line usage without display
                     pass
-                input_img = cv2.imread(images_list[i])
+                input_img = cv2.imread(images_list[i * 10 + j])
                 input_img = cv2.resize(input_img, tuple(list(converted_image.shape[:2])[::-1]), interpolation=cv2.INTER_LINEAR)
                 imsave(os.path.join(photo_dir, "image_%s.png" %(i*10 + j)), np.hstack([input_img, converted_image]))
                 # plt.show()
