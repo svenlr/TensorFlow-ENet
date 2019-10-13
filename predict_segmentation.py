@@ -128,7 +128,11 @@ with tf.Graph().as_default() as graph:
 
                 converted_image = grayscale_to_colour(segmentations[j])
                 print 'Saving image %s/%s' %(i*10 + j, len(images_list))
-                plt.axis('off')
-                plt.imshow(converted_image)
+                try:
+                    plt.axis('off')
+                    plt.imshow(converted_image)
+                except:
+                    # pass error for cmd line usage without display
+                    pass
                 imsave(os.path.join(photo_dir, "image_%s.png" %(i*10 + j)), converted_image)
                 # plt.show()
