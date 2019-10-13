@@ -287,6 +287,7 @@ def run():
         #Define your supervisor for running a managed session. Do not run the summary_op automatically or else it will consume too much memory
         sv = tf.train.Supervisor(logdir=logdir, summary_op=None, init_fn=None)
 
+        best_val_miou = 0
         # Run the managed session
         with sv.managed_session() as sess:
             for step in xrange(int(num_steps_per_epoch * num_epochs)):
@@ -296,14 +297,18 @@ def run():
                     learning_rate_value = sess.run([lr])
                     logging.info('Current Learning Rate: %s', learning_rate_value)
 
+                #Check the validation data only at every third of an epoch
+                if step % (num_steps_per_epoch / 3) == 0 and step > 0:
+                    for i in xrange(len(image_val_files) / eval_batch_size):
+                        validation_accuracy, validation_mean_IOU = eval_step(sess, metrics_op_val)
+                        if validation_mean_IOU > best_val_miou:
+                            best_val_miou = validation_mean_IOU
+                            model_name = "numcls{}mIoU{:.3f}.ckpt".format(num_classes, validation_mean_IOU)
+                            sv.saver.save(sess, os.path.join(logdir, model_name), global_step=sv.global_step)
+
                 #Log the summaries every 10 steps or every end of epoch, which ever lower.
                 if step % min(num_steps_per_epoch, 10) == 0 and step > 0:
                     loss, training_accuracy, training_mean_IOU = train_step(sess, train_op, sv.global_step, metrics_op=metrics_op)
-
-                    #Check the validation data only at every third of an epoch
-                    if step % (num_steps_per_epoch / 3) == 0:
-                        for i in xrange(len(image_val_files) / eval_batch_size):
-                            validation_accuracy, validation_mean_IOU = eval_step(sess, metrics_op_val)
 
                     summaries = sess.run(my_summary_op)
                     sv.summary_computed(sess, summaries)
